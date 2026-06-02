@@ -11,129 +11,96 @@ export const BackgroundAnimation: React.FC = memo(() => {
     if (!ctx) return;
 
     let animFrame: number;
-    let width = window.innerWidth;
-    let height = window.innerHeight;
+    let w = window.innerWidth, h = window.innerHeight;
 
     const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = w; canvas.height = h;
     };
     resize();
+    const obs = new ResizeObserver(resize);
+    obs.observe(document.body);
 
-    const resizeObs = new ResizeObserver(resize);
-    resizeObs.observe(document.body);
-
-    const chars = '01SHARKBINARYCALLPUT↑↓ΔΩ∑βφ⟳×◆▲▼'.split('');
-    const fontSize = 12;
-    const cols = Math.floor(width / fontSize);
-    const drops: number[] = Array.from({ length: cols }, () => Math.random() * -50);
+    const chars = '01SHARKBINARYCALLPUT↑↓ΔΣΦΩ∑▲▼◆×⟳'.split('');
+    const fs = 11;
+    const cols = Math.floor(w / fs);
+    const drops: number[] = Array.from({ length: cols }, () => Math.random() * -60);
 
     const draw = () => {
-      ctx.fillStyle = 'rgba(5, 8, 20, 0.06)';
-      ctx.fillRect(0, 0, width, height);
-      ctx.font = `${fontSize}px 'JetBrains Mono', monospace`;
+      ctx.fillStyle = 'rgba(6,12,26,0.055)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.font = `${fs}px 'JetBrains Mono', monospace`;
 
       for (let i = 0; i < drops.length; i++) {
         const char = chars[Math.floor(Math.random() * chars.length)];
-        const x = i * fontSize;
-        const y = drops[i] * fontSize;
+        const x = i * fs, y = drops[i] * fs;
         const r = Math.random();
-
-        if (r < 0.02) ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        else if (r < 0.25) ctx.fillStyle = 'rgba(0,212,255,0.7)';
-        else if (r < 0.55) ctx.fillStyle = 'rgba(0,180,220,0.4)';
-        else ctx.fillStyle = 'rgba(0,50,80,0.25)';
-
+        if (r < 0.015) ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        else if (r < 0.20) ctx.fillStyle = 'rgba(56,189,248,0.65)';
+        else if (r < 0.50) ctx.fillStyle = 'rgba(56,189,248,0.30)';
+        else ctx.fillStyle = 'rgba(14,80,120,0.18)';
         ctx.fillText(char, x, y);
-
-        if (y > height && Math.random() > 0.975) drops[i] = 0;
-        drops[i] += 0.5;
+        if (y > h && Math.random() > 0.978) drops[i] = 0;
+        drops[i] += 0.45;
       }
-
       animFrame = requestAnimationFrame(draw);
     };
-
     draw();
 
-    return () => {
-      cancelAnimationFrame(animFrame);
-      resizeObs.disconnect();
-    };
+    return () => { cancelAnimationFrame(animFrame); obs.disconnect(); };
   }, []);
 
   return (
     <>
-      {/* Shark background image */}
+      {/* Shark BG */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <img
-          src={sharkBg}
-          alt=""
-          className="w-full h-full object-cover"
-          style={{ opacity: 0.12 }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050814]/70 via-[#050814]/50 to-[#050814]/90" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050814]/60 via-transparent to-[#050814]/60" />
+        <img src={sharkBg} alt="" className="w-full h-full object-cover" style={{ opacity: 0.08 }} />
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(180deg, rgba(6,12,26,0.75) 0%, rgba(6,12,26,0.55) 50%, rgba(6,12,26,0.92) 100%)',
+        }} />
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(90deg, rgba(6,12,26,0.7) 0%, transparent 30%, transparent 70%, rgba(6,12,26,0.7) 100%)',
+        }} />
       </div>
 
-      {/* Matrix rain canvas */}
-      <canvas ref={canvasRef} className="fixed inset-0 z-[1] pointer-events-none" style={{ opacity: 0.18 }} />
+      {/* Matrix rain */}
+      <canvas ref={canvasRef} className="fixed inset-0 z-[1] pointer-events-none" style={{ opacity: 0.14 }} />
 
-      {/* Animated grid lines */}
-      <div
-        className="fixed inset-0 z-[2] pointer-events-none"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '64px 64px',
-        }}
-      />
+      {/* Grid */}
+      <div className="fixed inset-0 z-[2] pointer-events-none" style={{
+        backgroundImage: `linear-gradient(rgba(56,189,248,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.025) 1px, transparent 1px)`,
+        backgroundSize: '72px 72px',
+      }} />
 
-      {/* Radial glows */}
+      {/* Floating orbs */}
       <div className="fixed inset-0 z-[2] pointer-events-none overflow-hidden">
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 600, height: 600,
-            top: '10%', left: '5%',
-            background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)',
-            animation: 'float1 12s ease-in-out infinite',
-          }}
-        />
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 500, height: 500,
-            bottom: '15%', right: '8%',
-            background: 'radial-gradient(circle, rgba(0,100,255,0.05) 0%, transparent 70%)',
-            animation: 'float2 15s ease-in-out infinite',
-          }}
-        />
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 400, height: 400,
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'radial-gradient(circle, rgba(0,212,255,0.03) 0%, transparent 70%)',
-            animation: 'float1 20s ease-in-out infinite reverse',
-          }}
-        />
+        <div className="absolute rounded-full" style={{
+          width: 700, height: 700, top: '5%', left: '2%',
+          background: 'radial-gradient(circle, rgba(56,189,248,0.04) 0%, transparent 70%)',
+          animation: 'orb1 14s ease-in-out infinite',
+        }} />
+        <div className="absolute rounded-full" style={{
+          width: 600, height: 600, bottom: '10%', right: '5%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.04) 0%, transparent 70%)',
+          animation: 'orb2 18s ease-in-out infinite',
+        }} />
+        <div className="absolute rounded-full" style={{
+          width: 400, height: 400, top: '40%', left: '45%',
+          background: 'radial-gradient(circle, rgba(56,189,248,0.025) 0%, transparent 70%)',
+          animation: 'orb1 22s ease-in-out infinite reverse',
+        }} />
       </div>
 
       <style>{`
-        @keyframes float1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -20px) scale(1.05); }
-          66% { transform: translate(-20px, 15px) scale(0.95); }
+        @keyframes orb1 {
+          0%,100% { transform: translate(0,0) scale(1); }
+          33%      { transform: translate(40px,-25px) scale(1.06); }
+          66%      { transform: translate(-25px,20px) scale(0.94); }
         }
-        @keyframes float2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          40% { transform: translate(-25px, 20px) scale(1.08); }
-          70% { transform: translate(20px, -15px) scale(0.97); }
+        @keyframes orb2 {
+          0%,100% { transform: translate(0,0) scale(1); }
+          40%      { transform: translate(-30px,25px) scale(1.1); }
+          70%      { transform: translate(25px,-18px) scale(0.96); }
         }
       `}</style>
     </>
