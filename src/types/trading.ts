@@ -1,15 +1,16 @@
 export type SignalDirection = 'CALL' | 'PUT' | 'WAIT';
-export type MarketType = 'REAL' | 'VOLATILITY';
+export type MarketType = 'REAL';
 export type SessionType = 'ASIAN' | 'LONDON' | 'NEW_YORK' | 'OVERLAP' | 'OFF';
+export type SignalResult = 'WIN' | 'LOSS' | 'PENDING' | 'EXPIRED';
 
 export interface CurrencyPair {
   id: string;
   symbol: string;
   name: string;
   derivSymbol: string;
-  tvSymbol: string; // TradingView symbol
+  tvSymbol: string;
   type: MarketType;
-  category: 'forex' | 'volatility' | 'crypto';
+  category: 'forex';
   pip: number;
   flag?: string;
 }
@@ -32,7 +33,7 @@ export interface IndicatorValues {
   bb_middle: number;
   bb_lower: number;
   bb_width: number;
-  bb_pct: number; // BB %B
+  bb_pct: number;
   stoch_k: number;
   stoch_d: number;
   stoch_k_prev: number;
@@ -50,10 +51,14 @@ export interface IndicatorValues {
   volatility: number;
   trendStrength: 'STRONG_UP' | 'UP' | 'NEUTRAL' | 'DOWN' | 'STRONG_DOWN';
   signalConfluence: number;
-  priceVelocity: number; // rate of price change
+  priceVelocity: number;
   support: number;
   resistance: number;
   pivotPoint: number;
+  // Enhanced TradingView merged indicators
+  ichimokuCloud?: 'ABOVE' | 'BELOW' | 'INSIDE';
+  parabolicSAR?: 'BULL' | 'BEAR';
+  superTrend?: 'UP' | 'DOWN';
 }
 
 export interface SignalAnalysis {
@@ -65,6 +70,13 @@ export interface SignalAnalysis {
   reason: string;
   slPips: number;
   tpPips: number;
+}
+
+export interface MartingaleStep {
+  step: number;         // 1 = first recovery, 2 = second recovery
+  multiplier: number;   // stake multiplier
+  recoveryAmount: string;
+  active: boolean;
 }
 
 export interface Signal {
@@ -81,9 +93,23 @@ export interface Signal {
   indicators: IndicatorValues;
   analysis: SignalAnalysis;
   session: SessionType;
-  status: 'PENDING' | 'WIN' | 'LOSS' | 'EXPIRED';
+  status: SignalResult;
   countdown: number;
   riskReward: number;
+  // MTG/result tracking
+  isMartingale?: boolean;
+  martingaleStep?: number;
+  parentSignalId?: string;
+  resolvedAt?: Date;
+  resolvedPrice?: number;
+}
+
+export interface SignalRecord {
+  signal: Signal;
+  result: SignalResult;
+  resolvedAt: Date;
+  resolvedPrice: number;
+  priceDiff: number;
 }
 
 export interface TickData {
@@ -99,4 +125,5 @@ export interface ConnectionStatus {
   lastPing: number;
   error?: string;
   latency?: number;
+  ticksReceived?: number;
 }
