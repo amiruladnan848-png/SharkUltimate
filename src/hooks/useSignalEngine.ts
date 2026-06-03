@@ -304,5 +304,3 @@ export const useSignalEngine = ({ pair, priceHistory, enabled, onSignalGenerated
     lastResult,
   };
 };
-
-export { ANALYSIS_STEPS };
