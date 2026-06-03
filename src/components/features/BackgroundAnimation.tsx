@@ -11,24 +11,26 @@ export const BackgroundAnimation: React.FC = memo(() => {
     if (!ctx) return;
 
     let animFrame: number;
-    let w = window.innerWidth, h = window.innerHeight;
+    let w = 0, h = 0;
     const resize = () => {
       w = window.innerWidth; h = window.innerHeight;
       canvas.width = w; canvas.height = h;
     };
     resize();
-    const obs = new ResizeObserver(resize);
-    obs.observe(document.body);
+    window.addEventListener('resize', resize);
 
-    const chars = '01SHARKBINARYCALLPUT↑↓ΔΣΩ∑▲▼◆×FOREX'.split('');
+    // Matrix rain chars — trading themed
+    const chars = '01SHARKCALLPUT↑↓FOREX QX BROKER BINARY SIGNAL'.split('');
     const fs = 11;
     let cols = Math.floor(w / fs);
-    const drops: number[] = Array.from({ length: cols }, () => Math.random() * -80);
+    const drops: number[] = Array.from({ length: cols }, () => Math.random() * -100);
 
     const draw = () => {
       cols = Math.floor(w / fs);
-      while (drops.length < cols) drops.push(Math.random() * -80);
-      ctx.fillStyle = 'rgba(6,12,26,0.05)';
+      while (drops.length < cols) drops.push(Math.random() * -100);
+
+      // Bright fade — more visible background
+      ctx.fillStyle = 'rgba(4,9,22,0.055)';
       ctx.fillRect(0, 0, w, h);
       ctx.font = `${fs}px 'JetBrains Mono', monospace`;
 
@@ -36,77 +38,97 @@ export const BackgroundAnimation: React.FC = memo(() => {
         const char = chars[Math.floor(Math.random() * chars.length)];
         const x = i * fs, y = drops[i] * fs;
         const r = Math.random();
-        if (r < 0.008) ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        else if (r < 0.12) ctx.fillStyle = 'rgba(0,212,255,0.7)';
-        else if (r < 0.35) ctx.fillStyle = 'rgba(0,212,255,0.28)';
-        else ctx.fillStyle = 'rgba(0,80,120,0.12)';
+        // Brighter matrix with more contrast
+        if (r < 0.006)      ctx.fillStyle = 'rgba(255,255,255,1.0)';   // white spark
+        else if (r < 0.06)  ctx.fillStyle = 'rgba(0,229,255,0.9)';     // bright cyan
+        else if (r < 0.20)  ctx.fillStyle = 'rgba(0,212,255,0.55)';    // mid cyan
+        else if (r < 0.50)  ctx.fillStyle = 'rgba(0,160,220,0.28)';    // dim cyan
+        else                ctx.fillStyle = 'rgba(0,80,140,0.12)';     // very dim
         ctx.fillText(char, x, y);
-        if (y > h && Math.random() > 0.975) drops[i] = 0;
-        drops[i] += 0.4;
+        if (y > h && Math.random() > 0.972) drops[i] = 0;
+        drops[i] += 0.45;
       }
       animFrame = requestAnimationFrame(draw);
     };
     draw();
-    return () => { cancelAnimationFrame(animFrame); obs.disconnect(); };
+
+    return () => {
+      cancelAnimationFrame(animFrame);
+      window.removeEventListener('resize', resize);
+    };
   }, []);
 
   return (
     <>
-      {/* Shark pro background */}
+      {/* Shark background image — brighter */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <img src={sharkProBg} alt="" className="w-full h-full object-cover" style={{ opacity: 0.11 }} />
+        <img src={sharkProBg} alt="" className="w-full h-full object-cover"
+          style={{ opacity: 0.16 }} />
+        {/* Gradient overlay — brighter center */}
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(180deg, rgba(5,10,22,0.82) 0%, rgba(6,12,26,0.55) 45%, rgba(5,10,22,0.90) 100%)',
+          background: 'linear-gradient(180deg, rgba(4,9,22,0.75) 0%, rgba(5,12,28,0.42) 40%, rgba(4,9,22,0.82) 100%)',
         }} />
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(90deg, rgba(5,10,22,0.72) 0%, transparent 28%, transparent 72%, rgba(5,10,22,0.72) 100%)',
+          background: 'linear-gradient(90deg, rgba(4,9,22,0.65) 0%, transparent 25%, transparent 75%, rgba(4,9,22,0.65) 100%)',
         }} />
       </div>
 
-      {/* Matrix rain canvas */}
-      <canvas ref={canvasRef} className="fixed inset-0 z-[1] pointer-events-none" style={{ opacity: 0.13 }} />
+      {/* Matrix rain */}
+      <canvas ref={canvasRef} className="fixed inset-0 z-[1] pointer-events-none" style={{ opacity: 0.18 }} />
 
-      {/* Precision grid */}
+      {/* Bright precision grid */}
       <div className="fixed inset-0 z-[2] pointer-events-none" style={{
-        backgroundImage: `linear-gradient(rgba(0,212,255,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.022) 1px, transparent 1px)`,
-        backgroundSize: '64px 64px',
+        backgroundImage: `
+          linear-gradient(rgba(0,212,255,0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,212,255,0.035) 1px, transparent 1px)
+        `,
+        backgroundSize: '60px 60px',
       }} />
 
-      {/* Ambient glow orbs */}
+      {/* Bright ambient glows */}
       <div className="fixed inset-0 z-[2] pointer-events-none overflow-hidden">
+        {/* Top-left cyan glow */}
         <div className="absolute rounded-full" style={{
-          width: 900, height: 900, top: '-10%', left: '-5%',
-          background: 'radial-gradient(circle, rgba(0,212,255,0.035) 0%, transparent 65%)',
-          animation: 'orb1 16s ease-in-out infinite',
+          width: 1000, height: 1000, top: '-18%', left: '-8%',
+          background: 'radial-gradient(circle, rgba(0,212,255,0.055) 0%, transparent 62%)',
+          animation: 'orbA 18s ease-in-out infinite',
         }} />
+        {/* Bottom-right purple glow */}
         <div className="absolute rounded-full" style={{
-          width: 700, height: 700, bottom: '-8%', right: '-2%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.03) 0%, transparent 65%)',
-          animation: 'orb2 20s ease-in-out infinite',
+          width: 800, height: 800, bottom: '-15%', right: '-5%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 62%)',
+          animation: 'orbB 22s ease-in-out infinite',
         }} />
+        {/* Center accent */}
         <div className="absolute rounded-full" style={{
-          width: 500, height: 500, top: '35%', left: '42%',
-          background: 'radial-gradient(circle, rgba(0,212,255,0.02) 0%, transparent 65%)',
-          animation: 'orb1 25s ease-in-out infinite reverse',
+          width: 600, height: 600, top: '30%', left: '38%',
+          background: 'radial-gradient(circle, rgba(0,212,255,0.03) 0%, transparent 65%)',
+          animation: 'orbA 28s ease-in-out infinite reverse',
         }} />
-        {/* Shark fin silhouette hint */}
+        {/* Bright horizontal streak */}
         <div className="absolute" style={{
-          width: 200, height: 180, bottom: '12%', right: '18%',
-          background: 'radial-gradient(ellipse at bottom, rgba(0,212,255,0.04) 0%, transparent 70%)',
-          animation: 'orb2 12s ease-in-out infinite',
+          height: '1px',
+          left: 0, right: 0,
+          top: '30%',
+          background: 'linear-gradient(90deg, transparent 0%, rgba(0,212,255,0.08) 25%, rgba(0,212,255,0.18) 50%, rgba(0,212,255,0.08) 75%, transparent 100%)',
+          animation: 'streakPulse 6s ease-in-out infinite',
         }} />
       </div>
 
       <style>{`
-        @keyframes orb1 {
-          0%,100% { transform: translate(0,0) scale(1); }
-          33%      { transform: translate(50px,-30px) scale(1.06); }
-          66%      { transform: translate(-30px,25px) scale(0.94); }
+        @keyframes orbA {
+          0%,100% { transform: translate(0,0) scale(1); opacity:1; }
+          33%      { transform: translate(60px,-35px) scale(1.07); opacity:0.85; }
+          66%      { transform: translate(-35px,28px) scale(0.93); opacity:0.95; }
         }
-        @keyframes orb2 {
+        @keyframes orbB {
           0%,100% { transform: translate(0,0) scale(1); }
-          40%      { transform: translate(-40px,30px) scale(1.08); }
-          70%      { transform: translate(28px,-20px) scale(0.96); }
+          40%      { transform: translate(-50px,35px) scale(1.09); }
+          70%      { transform: translate(32px,-22px) scale(0.95); }
+        }
+        @keyframes streakPulse {
+          0%,100% { opacity:0.3; transform:scaleX(0.7); }
+          50%      { opacity:1; transform:scaleX(1); }
         }
       `}</style>
     </>

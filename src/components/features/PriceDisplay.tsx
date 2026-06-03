@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { memo } from 'react';
 import { TickData, CurrencyPair } from '@/types/trading';
-import { TrendingUp, TrendingDown, Wifi, WifiOff, Activity } from 'lucide-react';
+import { Wifi, WifiOff, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface PriceDisplayProps {
   tick: TickData | null;
@@ -10,118 +10,85 @@ interface PriceDisplayProps {
 }
 
 export const PriceDisplay: React.FC<PriceDisplayProps> = memo(({ tick, pair, connected, latency }) => {
-  const [direction, setDirection] = useState<'up' | 'down' | 'neutral'>('neutral');
-  const [flash, setFlash] = useState(false);
-  const [change, setChange] = useState(0);
-  const prevPrice = useRef<number | null>(null);
-  const [tickCount, setTickCount] = useState(0);
+  const price = tick?.price ?? 0;
+  const decimals = pair.pip <= 0.001 ? 3 : 5;
+  const priceStr = price > 0 ? price.toFixed(decimals) : '-.-----';
 
-  useEffect(() => {
-    if (!tick) return;
-    if (prevPrice.current !== null && prevPrice.current !== tick.price) {
-      const diff = tick.price - prevPrice.current;
-      setChange(diff);
-      setDirection(diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral');
-      setFlash(true);
-      setTimeout(() => setFlash(false), 300);
-    }
-    prevPrice.current = tick.price;
-    setTickCount(c => c + 1);
-  }, [tick?.price]);
-
-  const formatPrice = (price: number) => {
-    const decimals = pair.pip <= 0.00001 ? 5 : pair.pip <= 0.001 ? 3 : 2;
-    return price.toFixed(decimals);
-  };
-
-  const colorClass = direction === 'up' ? 'text-emerald-400' : direction === 'down' ? 'text-red-400' : 'text-white';
-  const glowStyle = direction === 'up'
-    ? { textShadow: '0 0 16px rgba(16,185,129,0.7)' }
-    : direction === 'down'
-    ? { textShadow: '0 0 16px rgba(239,68,68,0.7)' }
-    : {};
+  // Split price for highlighted pip digit
+  const parts = priceStr.split('.');
+  const intPart = parts[0] || '0';
+  const decPart = parts[1] || '';
+  const highlightIdx = pair.pip <= 0.001 ? 2 : 4; // 4th pip digit (main pip)
+  const decBefore = decPart.slice(0, highlightIdx);
+  const decHighlight = decPart[highlightIdx] ?? '';
+  const decAfter = decPart.slice(highlightIdx + 1);
 
   return (
-    <div className={`rounded-2xl border bg-[#0a0f1e]/85 backdrop-blur-xl p-4 transition-all duration-150 ${
-      flash
-        ? direction === 'up' ? 'border-emerald-500/60 shadow-sm shadow-emerald-500/20' : 'border-red-500/60 shadow-sm shadow-red-500/20'
-        : 'border-gray-700/50'
-    }`}>
-      {/* Header */}
+    <div className="rounded-2xl p-4"
+      style={{ border: '1px solid rgba(0,212,255,0.1)', background: 'rgba(4,9,22,0.9)', backdropFilter: 'blur(16px)' }}>
+
+      {/* Header row */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-          {connected ? <Wifi className="w-3.5 h-3.5 text-emerald-400" /> : <WifiOff className="w-3.5 h-3.5 text-red-400" />}
-          <span className={`text-xs font-bold ${connected ? 'text-emerald-400' : 'text-red-400'}`}>
-            {connected ? 'LIVE FEED' : 'RECONNECTING'}
-          </span>
+          {pair.flag && <span className="text-lg">{pair.flag}</span>}
+          <div>
+            <div className="text-white font-black text-sm">{pair.symbol}</div>
+            <div className="text-[9px]" style={{ color: '#1e3870' }}>{pair.name}</div>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-gray-500">
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full"
+            style={{
+              background: connected ? '#34d399' : '#f87171',
+              boxShadow: connected ? '0 0 6px rgba(52,211,153,0.8)' : '0 0 6px rgba(248,113,113,0.8)',
+              animation: 'pulse 1.5s ease-in-out infinite',
+            }} />
+          {connected ? <Wifi className="w-3 h-3 text-emerald-400" /> : <WifiOff className="w-3 h-3 text-red-400" />}
           {latency !== undefined && connected && (
-            <span className={latency < 100 ? 'text-emerald-500' : latency < 300 ? 'text-yellow-500' : 'text-red-500'}>
+            <span className="text-[9px] font-mono"
+              style={{ color: latency < 80 ? '#34d399' : latency < 200 ? '#fbbf24' : '#f87171' }}>
               {latency}ms
             </span>
           )}
-          <span>Deriv API</span>
         </div>
       </div>
 
-      {/* Price */}
-      <div className="flex items-end gap-3">
-        <div className="flex-1">
-          <div className="text-[10px] text-gray-500 mb-0.5 uppercase tracking-wider">{pair.name}</div>
-          <div className={`text-3xl font-mono font-black transition-all duration-150 ${colorClass}`} style={glowStyle}>
-            {tick ? formatPrice(tick.price) : '-.-----'}
+      {/* Price display */}
+      <div className="flex items-baseline gap-0.5 mb-3">
+        <span className="text-2xl font-black font-mono tabular-nums" style={{ color: '#8ab8d0' }}>{intPart}.</span>
+        <span className="text-2xl font-black font-mono tabular-nums" style={{ color: '#c8dce8' }}>{decBefore}</span>
+        <span className="text-4xl font-black font-mono tabular-nums"
+          style={{ color: '#00e5ff', textShadow: '0 0 18px rgba(0,229,255,0.7)' }}>{decHighlight}</span>
+        <span className="text-xl font-black font-mono tabular-nums" style={{ color: '#4a7090' }}>{decAfter}</span>
+      </div>
+
+      {/* Bid / Ask */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-xl p-2.5" style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
+          <div className="flex items-center gap-1 text-[9px] mb-1" style={{ color: '#1e5040' }}>
+            <TrendingUp className="w-2.5 h-2.5 text-emerald-500" /> BID
           </div>
-          {change !== 0 && tick && (
-            <div className={`text-xs font-mono mt-0.5 ${change > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {change > 0 ? '+' : ''}{change.toFixed(pair.pip <= 0.00001 ? 5 : 3)}
-            </div>
-          )}
+          <div className="font-mono font-bold text-xs text-emerald-400">
+            {tick?.bid ? tick.bid.toFixed(decimals) : priceStr}
+          </div>
         </div>
-        <div className="flex flex-col items-center gap-1 mb-1">
-          {direction !== 'neutral' && (
-            <div className={`p-1.5 rounded-lg ${direction === 'up' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
-              {direction === 'up' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
-            </div>
-          )}
-          <div className="flex items-center gap-1 text-[9px] text-gray-600">
-            <Activity className="w-2.5 h-2.5" />
-            <span>{tickCount} ticks</span>
+        <div className="rounded-xl p-2.5" style={{ background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.15)' }}>
+          <div className="flex items-center gap-1 text-[9px] mb-1" style={{ color: '#501e1e' }}>
+            <TrendingDown className="w-2.5 h-2.5 text-red-500" /> ASK
+          </div>
+          <div className="font-mono font-bold text-xs text-red-400">
+            {tick?.ask ? tick.ask.toFixed(decimals) : priceStr}
           </div>
         </div>
       </div>
 
-      {/* Bid/Ask */}
-      {tick && (tick.bid || tick.ask) && (
-        <div className="flex gap-4 mt-2.5 pt-2.5 border-t border-gray-700/30 text-[10px]">
-          {tick.bid && (
-            <div>
-              <span className="text-gray-600">BID </span>
-              <span className="text-red-400 font-mono font-semibold">{formatPrice(tick.bid)}</span>
-            </div>
-          )}
-          {tick.ask && (
-            <div>
-              <span className="text-gray-600">ASK </span>
-              <span className="text-emerald-400 font-mono font-semibold">{formatPrice(tick.ask)}</span>
-            </div>
-          )}
-          {tick.bid && tick.ask && (
-            <div className="ml-auto">
-              <span className="text-gray-600">SPREAD </span>
-              <span className="text-cyan-400 font-mono font-semibold">{((tick.ask - tick.bid) / pair.pip).toFixed(1)}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Last update */}
-      {tick && (
-        <div className="mt-1.5 text-[9px] text-gray-700 text-right">
-          {new Date(tick.timestamp).toLocaleTimeString()}
-        </div>
-      )}
+      {/* QX Broker live feed label */}
+      <div className="mt-3 flex items-center justify-between text-[9px]" style={{ color: '#1e3870' }}>
+        <span>Deriv WS v3 Feed</span>
+        <span className="flex items-center gap-1" style={{ color: '#2a4060' }}>
+          <Minus className="w-2 h-2" /> QX Broker Compatible
+        </span>
+      </div>
     </div>
   );
 });
