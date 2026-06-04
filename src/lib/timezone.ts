@@ -27,22 +27,34 @@ export const getUTCHour = (): number => new Date().getUTCHours();
 
 export const getCurrentSession = (): SessionType => {
   const h = getUTCHour();
-  // London Open: 07–12 UTC | New York Open: 12–17 UTC | London-NY Overlap: 12–16 UTC
-  // Asian: 22–07 UTC | Overlap: 12–16 UTC
-  if (h >= 12 && h < 16) return 'OVERLAP';    // London + NY overlap (BEST)
-  if (h >= 7 && h < 12) return 'LONDON';      // London session
-  if (h >= 16 && h < 21) return 'NEW_YORK';   // NY session (post overlap)
-  if (h >= 21 || h < 7) return 'ASIAN';       // Asian session
+  if (h >= 12 && h < 16) return 'OVERLAP';    // London + NY overlap (BEST) — highest vol
+  if (h >= 7  && h < 12) return 'LONDON';     // London session — strong moves
+  if (h >= 16 && h < 21) return 'NEW_YORK';   // NY session — strong trend continuation
+  if (h >= 21 || h < 7)  return 'ASIAN';      // Asian session — lower vol but predictable
   return 'OFF';
 };
 
+// Enhanced session boosts for maximum accuracy
 export const getSessionAccuracyBoost = (session: SessionType): number => {
   switch (session) {
-    case 'OVERLAP':  return 18; // Highest liquidity
-    case 'LONDON':   return 14;
-    case 'NEW_YORK': return 12;
-    case 'ASIAN':    return 8;
-    default:         return 5;
+    case 'OVERLAP':  return 20; // Prime — London+NY max liquidity
+    case 'LONDON':   return 16; // High — strong institutional moves
+    case 'NEW_YORK': return 14; // High — continuation & reversals
+    case 'ASIAN':    return 10; // Moderate — range-bound but consistent
+    default:         return 7;
+  }
+};
+
+// Session descriptions for UI
+export const getSessionDetails = (session: SessionType): {
+  label: string; utcRange: string; color: string; quality: string; description: string;
+} => {
+  switch (session) {
+    case 'OVERLAP':  return { label: 'LDN+NY Overlap', utcRange: '12:00–16:00 UTC', color: '#34d399', quality: 'PRIME',  description: 'Highest liquidity — best signals' };
+    case 'LONDON':   return { label: 'London Session',  utcRange: '07:00–12:00 UTC', color: '#38bdf8', quality: 'HIGH',   description: 'Strong institutional moves' };
+    case 'NEW_YORK': return { label: 'New York Session',utcRange: '16:00–21:00 UTC', color: '#a78bfa', quality: 'HIGH',   description: 'Trend continuation & reversals' };
+    case 'ASIAN':    return { label: 'Asian Session',   utcRange: '21:00–07:00 UTC', color: '#fbbf24', quality: 'MEDIUM', description: 'Range-bound, consistent signals' };
+    default:         return { label: 'Market Off',      utcRange: '',                color: '#4b5563', quality: 'LOW',    description: 'Low activity period' };
   }
 };
 
